@@ -145,8 +145,8 @@ export function ChapterExplorer({ embedded = false, className }: ChapterExplorer
         className
       )}
     >
-      {/* 头部（仅独立模式显示） */}
-      {!embedded && (
+      {/* 头部（独立模式显示完整标题，嵌入模式显示精简操作栏） */}
+      {!embedded ? (
         <div className="flex items-center justify-between px-3 h-10 border-b border-border">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">目录</span>
           <button
@@ -155,6 +155,17 @@ export function ChapterExplorer({ embedded = false, className }: ChapterExplorer
             title="新建分卷"
           >
             <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-end px-2 py-1 border-b border-border shrink-0">
+          <button
+            onClick={handleAddVolume}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+            title="新建分卷"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            新建分卷
           </button>
         </div>
       )}

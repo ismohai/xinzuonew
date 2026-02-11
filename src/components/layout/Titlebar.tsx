@@ -61,7 +61,7 @@ export function Titlebar() {
         </button>
         <button
           onClick={() => appWindow.close()}
-          className="flex items-center justify-center w-10 h-8 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+          className="flex items-center justify-center w-10 h-8 text-muted-foreground hover:bg-red-600 hover:text-white transition-colors"
           title="关闭"
         >
           <X className="w-3.5 h-3.5" />

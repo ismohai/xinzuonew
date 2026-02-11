@@ -38,7 +38,7 @@ export function ForeshadowPanel() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 标签切换 */}
+      {/* 标签切换 + 添加按钮 */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border">
         <button
           onClick={() => setShowResolved(false)}
@@ -60,6 +60,15 @@ export function ForeshadowPanel() {
           <CheckCircle2 className="w-3 h-3" />
           已收 ({resolved.length})
         </button>
+        {!showResolved && (
+          <button
+            onClick={() => setAdding(true)}
+            className="ml-auto p-1 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            title="埋伏笔"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* 列表 */}
@@ -117,18 +126,6 @@ export function ForeshadowPanel() {
         )}
       </div>
 
-      {/* 底部 */}
-      {!showResolved && (
-        <div className="px-3 py-2 border-t border-border">
-          <button
-            onClick={() => setAdding(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            埋伏笔
-          </button>
-        </div>
-      )}
     </div>
   );
 }
