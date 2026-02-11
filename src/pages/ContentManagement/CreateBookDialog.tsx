@@ -45,9 +45,7 @@ export function CreateBookDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-muted-foreground">
-              书名 <span className="text-destructive">*</span>
-            </label>
+            <label className="text-sm text-muted-foreground">书名</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
