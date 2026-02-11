@@ -17,16 +17,16 @@ interface Props {
 export function CreateBookDialog({ open, onOpenChange }: Props) {
   const addBook = useBookStore((s) => s.addBook);
   const [name, setName] = useState("");
-  const [authorName, setAuthorName] = useState("");
+  const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim()) return;
     setLoading(true);
     try {
-      await addBook(name.trim(), authorName.trim() || "佚名");
+      await addBook(name.trim(), description.trim() || "佚名");
       setName("");
-      setAuthorName("");
+      setDescription("");
       onOpenChange(false);
     } catch (err) {
       console.error("Failed to create book:", err);
@@ -34,6 +34,8 @@ export function CreateBookDialog({ open, onOpenChange }: Props) {
       setLoading(false);
     }
   };
+
+  const inputClass = "border border-border rounded-lg px-3 py-2 text-sm bg-background outline-none transition-colors focus:border-ring";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,24 +45,28 @@ export function CreateBookDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
         <div className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-muted-foreground">书名</label>
+            <label className="text-sm text-muted-foreground">
+              书名 <span className="text-destructive">*</span>
+            </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="输入书名"
-              className="border border-border rounded-lg px-3 py-2 text-sm bg-background outline-none focus:ring-1 focus:ring-ring"
+              className={inputClass}
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm text-muted-foreground">作者笔名</label>
-            <input
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="默认：佚名"
-              className="border border-border rounded-lg px-3 py-2 text-sm bg-background outline-none focus:ring-1 focus:ring-ring"
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            <label className="text-sm text-muted-foreground">
+              简介 <span className="text-muted-foreground/50 text-xs">（可选）</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="输入简介"
+              className={`${inputClass} min-h-[100px] resize-none`}
+              rows={4}
             />
           </div>
         </div>
