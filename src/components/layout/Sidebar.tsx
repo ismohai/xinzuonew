@@ -94,7 +94,7 @@ export function Sidebar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                    className="rounded-xl outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-xl"
                     title="用户菜单"
                   >
                     <UserAvatar className="w-9 h-9" />
