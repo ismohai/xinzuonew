@@ -6,6 +6,8 @@ interface BookState {
   books: Book[];
   loading: boolean;
   currentBookId: string | null;
+  searchQuery: string;
+  showCreateDialog: boolean;
 
   fetchBooks: () => Promise<void>;
   addBook: (name: string, authorName: string) => Promise<Book>;
@@ -13,12 +15,16 @@ interface BookState {
   updateBook: (id: string, opts: { name?: string; authorName?: string; coverPath?: string }) => Promise<void>;
   setCurrentBook: (id: string | null) => void;
   getCurrentBook: () => Book | undefined;
+  setSearchQuery: (q: string) => void;
+  setShowCreateDialog: (show: boolean) => void;
 }
 
 export const useBookStore = create<BookState>((set, get) => ({
   books: [],
   loading: false,
   currentBookId: null,
+  searchQuery: "",
+  showCreateDialog: false,
 
   fetchBooks: async () => {
     set({ loading: true });
@@ -57,4 +63,7 @@ export const useBookStore = create<BookState>((set, get) => ({
     const { books, currentBookId } = get();
     return books.find((b) => b.id === currentBookId);
   },
+
+  setSearchQuery: (q) => set({ searchQuery: q }),
+  setShowCreateDialog: (show) => set({ showCreateDialog: show }),
 }));

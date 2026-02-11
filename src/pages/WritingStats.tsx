@@ -21,12 +21,7 @@ export function WritingStats() {
   const durationMin = Math.round(todayDuration / 60);
 
   return (
-    <div className="flex flex-col h-full">
-      <header className="flex items-center px-6 h-14 shrink-0 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">写作统计</h1>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-6">
         {/* 统计卡片网格 — Memos card 风格 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* 今日字数 */}
@@ -72,7 +67,6 @@ export function WritingStats() {
           <BarChart3 className="w-12 h-12 opacity-20 mb-3" />
           <p className="text-sm">趋势图表将在后续版本中推出</p>
         </div>
-      </div>
     </div>
   );
 }

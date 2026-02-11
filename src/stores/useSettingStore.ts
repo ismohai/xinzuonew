@@ -86,7 +86,6 @@ export const useSettingStore = create<SettingState>((set) => ({
         previousPageIndex: previousPageIndex === -1 ? 0 : previousPageIndex,
       };
     }),
-  setActivePage: (page) => set({ activePage: page }),
   setExtraPanel: (panel) => set({ extraPanel: panel }),
   setEditingBookId: (bookId) =>
     set((state) => ({

@@ -31,12 +31,7 @@ export function ThemeSettings() {
   const setAnimationDuration = useSettingStore((s) => s.setAnimationDuration);
 
   return (
-    <div className="flex flex-col h-full">
-      <header className="flex items-center px-6 h-14 shrink-0 border-b border-border">
-        <h1 className="text-lg font-semibold text-foreground">主题设置</h1>
-      </header>
-
-      <div className="flex-1 overflow-y-auto p-6">
+    <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-xl mx-auto w-full">
         {/* ---- 外观 ---- */}
         <section className="mb-8">
@@ -143,7 +138,6 @@ export function ThemeSettings() {
           </div>
         </section>
         </div>
-      </div>
     </div>
   );
 }
