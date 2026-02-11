@@ -1,8 +1,11 @@
-import { X, Bell, Info, RefreshCw, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Bell, Info, RefreshCw, Settings, FolderOpen, Loader2 } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 import { cn } from "@/lib/utils";
 import { useSettingStore } from "@/stores/useSettingStore";
 import type { ExtraPanelType } from "@/types";
 import { motion } from "framer-motion";
+import * as api from "@/api";
 
 // ---- 面板内容配置 ----
 
@@ -16,7 +19,7 @@ const PANELS: PanelConfig[] = [
   { id: "notifications", title: "通知中心", icon: Bell },
   { id: "updates", title: "检查更新", icon: RefreshCw },
   { id: "about", title: "关于心作", icon: Info },
-  { id: "settings", title: "快捷设置", icon: Settings },
+  { id: "settings", title: "系统设置", icon: Settings },
 ];
 
 // ---- 面板内容组件 (各面板的骨架) ----
@@ -50,10 +53,65 @@ function AboutContent() {
   );
 }
 
-function SettingsQuickContent() {
+function SystemSettingsContent() {
+  const [dataDir, setDataDir] = useState("");
+  const [moving, setMoving] = useState(false);
+
+  useEffect(() => {
+    api.getDataDir().then(setDataDir).catch(console.error);
+  }, []);
+
+  const handleChangeDataDir = async () => {
+    const selected = await open({ directory: true, title: "选择数据存储目录" });
+    if (!selected) return;
+
+    setMoving(true);
+    try {
+      await api.setDataDir(selected);
+      const newDir = await api.getDataDir();
+      setDataDir(newDir);
+    } catch (err) {
+      console.error("迁移数据目录失败:", err);
+    } finally {
+      setMoving(false);
+    }
+  };
+
   return (
-    <div className="text-sm text-muted-foreground">
-      请前往「主题设置」页面进行完整配置。
+    <div className="flex flex-col gap-4">
+      {/* 数据目录 */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <FolderOpen className="w-3.5 h-3.5" />
+          数据目录
+        </div>
+        <div className="flex flex-col gap-2 bg-card rounded-lg border border-border p-3">
+          <span className="text-xs text-foreground break-all" title={dataDir}>
+            {dataDir || "加载中..."}
+          </span>
+          <button
+            onClick={handleChangeDataDir}
+            disabled={moving}
+            className={cn(
+              "w-full px-3 py-1.5 text-xs rounded-md border transition-colors text-center",
+              "border-border text-muted-foreground hover:bg-accent",
+              moving && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {moving ? (
+              <span className="flex items-center justify-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                迁移中...
+              </span>
+            ) : (
+              "更改目录"
+            )}
+          </button>
+          <p className="text-[11px] text-muted-foreground/70">
+            更改后，已有数据会自动迁移到新目录
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -62,7 +120,7 @@ const PANEL_CONTENT: Record<Exclude<ExtraPanelType, null>, React.ComponentType> 
   notifications: NotificationsContent,
   updates: UpdatesContent,
   about: AboutContent,
-  settings: SettingsQuickContent,
+  settings: SystemSettingsContent,
 };
 
 // ---- ExtraPanel 组件 ----

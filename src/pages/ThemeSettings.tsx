@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
-import { Sun, Moon, Monitor, Type, Ruler, FolderOpen, Loader2 } from "lucide-react";
-import { open } from "@tauri-apps/plugin-dialog";
+import { Sun, Moon, Monitor, Type, Ruler } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingStore, type ThemeMode } from "@/stores/useSettingStore";
-import * as api from "@/api";
 
 // 复用 Memos Settings/ 结构: SettingSection > SettingGroup > SettingRow
 
@@ -33,68 +30,9 @@ export function ThemeSettings() {
   const animationDuration = useSettingStore((s) => s.animationDuration);
   const setAnimationDuration = useSettingStore((s) => s.setAnimationDuration);
 
-  const [dataDir, setDataDir] = useState("");
-  const [moving, setMoving] = useState(false);
-
-  useEffect(() => {
-    api.getDataDir().then(setDataDir).catch(console.error);
-  }, []);
-
-  const handleChangeDataDir = async () => {
-    const selected = await open({ directory: true, title: "选择数据存储目录" });
-    if (!selected) return;
-
-    setMoving(true);
-    try {
-      await api.setDataDir(selected);
-      const newDir = await api.getDataDir();
-      setDataDir(newDir);
-    } catch (err) {
-      console.error("迁移数据目录失败:", err);
-    } finally {
-      setMoving(false);
-    }
-  };
-
   return (
     <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-xl mx-auto w-full">
-        {/* ---- 数据目录 ---- */}
-        <section className="mb-8">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
-            <FolderOpen className="inline w-4 h-4 mr-1 -mt-0.5" />
-            数据目录
-          </h2>
-          <div className="flex flex-col gap-3 bg-card rounded-lg border border-border p-4">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-foreground truncate flex-1" title={dataDir}>
-                {dataDir || "加载中..."}
-              </span>
-              <button
-                onClick={handleChangeDataDir}
-                disabled={moving}
-                className={cn(
-                  "shrink-0 px-3 py-1.5 text-xs rounded-md border transition-colors",
-                  "border-border text-muted-foreground hover:bg-accent",
-                  moving && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {moving ? (
-                  <span className="flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    迁移中...
-                  </span>
-                ) : (
-                  "更改目录"
-                )}
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              更改后，已有数据会自动迁移到新目录
-            </p>
-          </div>
-        </section>
-
         {/* ---- 外观 ---- */}
         <section className="mb-8">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">外观</h2>
