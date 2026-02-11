@@ -1,0 +1,22 @@
+@import "./themes/default.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border outline-none ring-0;
+  }
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+  html {
+    @apply overflow-hidden;
+  }
+  body {
+    @apply bg-background text-foreground m-0 p-0;
+  }
+}
