@@ -6,6 +6,7 @@ import { InspirationCenter } from "@/pages/InspirationCenter";
 import { WritingStats } from "@/pages/WritingStats";
 import { TaskCenter } from "@/pages/TaskCenter";
 import { ThemeSettings } from "@/pages/ThemeSettings";
+import { TrashPage } from "@/pages/TrashPage";
 import { EditorPage } from "@/pages/EditorPage";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AnimatePresence, motion } from "framer-motion";
@@ -17,6 +18,7 @@ const PAGE_COMPONENTS: Record<PageType, ComponentType> = {
   stats: WritingStats,
   tasks: TaskCenter,
   themes: ThemeSettings,
+  trash: TrashPage,
 };
 
 export function MainContent() {

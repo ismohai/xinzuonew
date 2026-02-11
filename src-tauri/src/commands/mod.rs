@@ -2,6 +2,7 @@ pub mod book;
 pub mod chapter;
 pub mod entity;
 pub mod foreshadow;
+pub mod io;
 pub mod settings;
 pub mod snapshot;
 pub mod stats;

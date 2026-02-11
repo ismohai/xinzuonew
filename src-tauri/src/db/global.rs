@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 
 /// 当前程序内置的 global.db schema 版本号
-const CURRENT_VERSION: u32 = 1;
+const CURRENT_VERSION: u32 = 2;
 
 /// 初始化 global.db：建表 + 执行迁移
 pub fn initialize(conn: &Connection) -> Result<(), String> {
@@ -36,7 +36,8 @@ fn create_tables_v1(conn: &Connection) -> Result<(), String> {
             cover_path      TEXT,
             storage_path    TEXT NOT NULL,
             created_at      TEXT NOT NULL,
-            updated_at      TEXT NOT NULL
+            updated_at      TEXT NOT NULL,
+            deleted_at      TEXT
         );
 
         -- 全局设置（key-value）
@@ -82,12 +83,13 @@ fn create_tables_v1(conn: &Connection) -> Result<(), String> {
 // ============================================================================
 
 fn migrate(conn: &Connection, from_version: u32) -> Result<(), String> {
-    let current = from_version;
+    let mut current = from_version;
     while current < CURRENT_VERSION {
         match current {
-            // 未来版本在此添加迁移：
-            // 0 => { migrate_v0_to_v1(conn)?; current = 1; }
-            // 1 => { migrate_v1_to_v2(conn)?; current = 2; }
+            1 => {
+                migrate_v1_to_v2(conn)?;
+                current = 2;
+            }
             _ => {
                 return Err(format!(
                     "global.db 版本 {} 无对应迁移脚本，目标版本 {}",
@@ -98,6 +100,12 @@ fn migrate(conn: &Connection, from_version: u32) -> Result<(), String> {
     }
     set_user_version(conn, CURRENT_VERSION)?;
     Ok(())
+}
+
+/// v1 → v2: 给 books 表添加 deleted_at 列（用于软删除/回收站）
+fn migrate_v1_to_v2(conn: &Connection) -> Result<(), String> {
+    conn.execute_batch("ALTER TABLE books ADD COLUMN deleted_at TEXT;")
+        .map_err(|e| format!("迁移 v1→v2 失败: {}", e))
 }
 
 // ============================================================================

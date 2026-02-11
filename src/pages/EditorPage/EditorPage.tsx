@@ -4,6 +4,8 @@ import { useBookStore } from "@/stores/useBookStore";
 import { useEditorStore } from "@/stores/useEditorStore";
 import { useSettingStore } from "@/stores/useSettingStore";
 import { EditorArea } from "./EditorArea";
+import { TabBar } from "./TabBar";
+import { SearchOverlay } from "./SearchOverlay";
 import { StatusBar } from "./StatusBar";
 
 /**
@@ -17,7 +19,6 @@ interface EditorPageProps {
 export function EditorPage({ bookId }: EditorPageProps) {
   const { books, fetchBooks, loading } = useBookStore();
   const { setStoragePath, fetchVolumes, reset } = useEditorStore();
-  const currentChapter = useEditorStore((s) => s.currentChapter);
   const setEditingBookId = useSettingStore((s) => s.setEditingBookId);
 
   const book = books.find((b) => b.id === bookId);
@@ -63,20 +64,17 @@ export function EditorPage({ bookId }: EditorPageProps) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* 顶部标签栏 */}
-      <div className="flex items-center gap-2 px-3 h-14 border-b border-border shrink-0">
+      <div className="flex items-center gap-2 px-3 h-10 border-b border-border shrink-0">
         <button
           onClick={() => setEditingBookId(null)}
-          className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors shrink-0"
           title="返回书架"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs text-muted-foreground truncate">{book.name}</span>
-          <div className="px-3 py-1 rounded-md bg-accent text-xs text-foreground truncate max-w-[240px]">
-            {currentChapter ? currentChapter.name : "暂无打开的章节"}
-          </div>
-        </div>
+        <span className="text-xs text-muted-foreground truncate shrink-0">{book.name}</span>
+        <div className="h-4 w-px bg-border shrink-0" />
+        <TabBar />
       </div>
 
       {/* 编辑主体 */}
@@ -86,6 +84,9 @@ export function EditorPage({ bookId }: EditorPageProps) {
 
       {/* 底部状态栏 */}
       <StatusBar />
+
+      {/* 全局搜索浮层 */}
+      <SearchOverlay />
     </div>
   );
 }

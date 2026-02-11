@@ -2,7 +2,7 @@ mod commands;
 mod db;
 
 use commands::{
-    book, chapter, entity, foreshadow,
+    book, chapter, entity, foreshadow, io,
     settings, snapshot, stats, volume, window,
 };
 
@@ -27,6 +27,9 @@ pub fn run() {
             book::list_books,
             book::update_book,
             book::delete_book,
+            book::list_deleted_books,
+            book::restore_book,
+            book::permanently_delete_book,
             // 分卷
             volume::create_volume,
             volume::list_volumes,
@@ -43,6 +46,7 @@ pub fn run() {
             chapter::move_chapter,
             chapter::delete_chapter,
             chapter::set_chapter_status,
+            chapter::search_chapters,
             // 设定集
             entity::create_entity,
             entity::list_entities,
@@ -71,6 +75,9 @@ pub fn run() {
             settings::update_setting,
             settings::get_data_dir,
             settings::set_data_dir,
+            // 导入导出
+            io::export_txt,
+            io::import_txt,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

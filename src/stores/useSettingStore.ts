@@ -18,6 +18,7 @@ interface SettingState {
   fontSize: number;
   fontFamily: string;
   dailyGoal: number;
+  autoSaveInterval: number; // seconds, 0 = disabled
   animationDuration: number;
 
   // 主界面导航状态 (xinzuo 风格)
@@ -31,6 +32,7 @@ interface SettingState {
   setFontSize: (size: number) => void;
   setFontFamily: (family: string) => void;
   setDailyGoal: (goal: number) => void;
+  setAutoSaveInterval: (seconds: number) => void;
   setAnimationDuration: (duration: number) => void;
   setActivePage: (page: PageType) => void;
   setExtraPanel: (panel: ExtraPanelType | null) => void;
@@ -44,6 +46,7 @@ export const useSettingStore = create<SettingState>((set) => ({
   fontSize: 16,
   fontFamily: "system-ui",
   dailyGoal: 2000,
+  autoSaveInterval: 30,
   animationDuration: 200,
   activePage: "content",
   previousPageIndex: 0,
@@ -69,6 +72,10 @@ export const useSettingStore = create<SettingState>((set) => ({
   setDailyGoal: (goal) => {
     set({ dailyGoal: goal });
     api.setDailyGoal(goal).catch(console.error);
+  },
+  setAutoSaveInterval: (seconds) => {
+    set({ autoSaveInterval: seconds });
+    api.updateSetting("auto_save_interval", String(seconds)).catch(console.error);
   },
   setAnimationDuration: (duration) => {
     const rounded = Math.round(duration / 100) * 100;
@@ -111,6 +118,7 @@ export const useSettingStore = create<SettingState>((set) => ({
         fontSize: map["font_size"] ? Number(map["font_size"]) : 16,
         fontFamily: map["font_family"] || "system-ui",
         dailyGoal: map["daily_goal"] ? Number(map["daily_goal"]) : 2000,
+        autoSaveInterval: map["auto_save_interval"] ? Number(map["auto_save_interval"]) : 30,
         animationDuration,
       });
     } catch (err) {

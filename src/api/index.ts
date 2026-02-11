@@ -17,6 +17,26 @@ export const updateBook = (id: string, opts: { name?: string; authorName?: strin
 export const deleteBook = (id: string) =>
   invoke<void>("delete_book", { id });
 
+export interface DeletedBook {
+  id: string;
+  name: string;
+  author_name: string;
+  cover_path: string | null;
+  storage_path: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string;
+}
+
+export const listDeletedBooks = () =>
+  invoke<DeletedBook[]>("list_deleted_books");
+
+export const restoreBook = (id: string) =>
+  invoke<void>("restore_book", { id });
+
+export const permanentlyDeleteBook = (id: string) =>
+  invoke<void>("permanently_delete_book", { id });
+
 // ============================================================================
 // 分卷管理
 // ============================================================================
@@ -66,6 +86,16 @@ export const deleteChapter = (storagePath: string, id: string) =>
 
 export const setChapterStatus = (storagePath: string, id: string, status: string) =>
   invoke<void>("set_chapter_status", { storagePath, id, status });
+
+export interface SearchHit {
+  chapter_id: string;
+  chapter_name: string;
+  volume_id: string;
+  snippet: string;
+}
+
+export const searchChapters = (storagePath: string, query: string, volumeId?: string) =>
+  invoke<SearchHit[]>("search_chapters", { storagePath, query, volumeId });
 
 // ============================================================================
 // 设定集管理
@@ -155,6 +185,20 @@ export const getDataDir = () =>
 
 export const setDataDir = (newDir: string) =>
   invoke<void>("set_data_dir", { newDir });
+
+// ============================================================================
+// 窗口管理
+// ============================================================================
+
+// ============================================================================
+// 导入导出
+// ============================================================================
+
+export const exportTxt = (storagePath: string, outputPath: string) =>
+  invoke<void>("export_txt", { storagePath, outputPath });
+
+export const importTxt = (storagePath: string, filePath: string, volumeName: string) =>
+  invoke<string>("import_txt", { storagePath, filePath, volumeName });
 
 // ============================================================================
 // 窗口管理

@@ -1,22 +1,17 @@
-import { BookOpen, MoreHorizontal, Trash2, Pencil } from "lucide-react";
+import { BookOpen, MoreHorizontal, Trash2, Pencil, Upload, Download } from "lucide-react";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import type { Book } from "@/types";
 import { useBookStore } from "@/stores/useBookStore";
 import { useSettingStore } from "@/stores/useSettingStore";
+import * as api from "@/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-/**
- * Memos MemoView/constants.ts MEMO_CARD_BASE_CLASSES 的样式复用:
- * "relative group flex flex-col justify-start items-start bg-card w-full
- *  px-4 py-3 mb-2 gap-2 text-card-foreground rounded-lg border border-border
- *  transition-colors"
- *
- * 这里适配为书籍卡片，增加 hover 效果。
- */
 const BOOK_CARD_CLASSES =
   "relative group flex flex-col justify-start items-start bg-card w-full px-4 py-4 gap-3 text-card-foreground rounded-lg border border-border transition-colors hover:border-primary/40 hover:shadow-sm cursor-pointer";
 
@@ -26,10 +21,24 @@ interface BookCardProps {
 
 export function BookCard({ book }: BookCardProps) {
   const removeBook = useBookStore((s) => s.removeBook);
+  const fetchBooks = useBookStore((s) => s.fetchBooks);
   const setEditingBookId = useSettingStore((s) => s.setEditingBookId);
 
   const handleOpen = () => {
     setEditingBookId(book.id);
+  };
+
+  const handleExport = async () => {
+    const path = await save({ filters: [{ name: "Text", extensions: ["txt"] }], defaultPath: `${book.name}.txt` });
+    if (!path) return;
+    await api.exportTxt(book.storage_path, path);
+  };
+
+  const handleImport = async () => {
+    const path = await open({ filters: [{ name: "Text", extensions: ["txt"] }] });
+    if (!path) return;
+    await api.importTxt(book.storage_path, path as string, "导入分卷");
+    await fetchBooks();
   };
 
   return (
@@ -53,7 +62,7 @@ export function BookCard({ book }: BookCardProps) {
         <p className="text-xs text-muted-foreground truncate">{book.author_name}</p>
       </div>
 
-      {/* 更多操作 — Memos MemoHeader 的 ... 按钮风格 */}
+      {/* 更多操作 */}
       <div
         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
@@ -69,6 +78,16 @@ export function BookCard({ book }: BookCardProps) {
               <Pencil className="mr-2 h-4 w-4" />
               打开
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleImport}>
+              <Upload className="mr-2 h-4 w-4" />
+              导入 TXT
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" />
+              导出 TXT
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={() => removeBook(book.id)}

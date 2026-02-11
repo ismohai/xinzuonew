@@ -54,6 +54,16 @@ function AboutContent() {
 }
 
 function SystemSettingsContent() {
+  const themeMode = useSettingStore((s) => s.themeMode);
+  const setThemeMode = useSettingStore((s) => s.setThemeMode);
+  const fontSize = useSettingStore((s) => s.fontSize);
+  const setFontSize = useSettingStore((s) => s.setFontSize);
+  const fontFamily = useSettingStore((s) => s.fontFamily);
+  const setFontFamily = useSettingStore((s) => s.setFontFamily);
+  const dailyGoal = useSettingStore((s) => s.dailyGoal);
+  const setDailyGoal = useSettingStore((s) => s.setDailyGoal);
+  const autoSaveInterval = useSettingStore((s) => s.autoSaveInterval);
+  const setAutoSaveInterval = useSettingStore((s) => s.setAutoSaveInterval);
   const [dataDir, setDataDir] = useState("");
   const [moving, setMoving] = useState(false);
 
@@ -64,7 +74,6 @@ function SystemSettingsContent() {
   const handleChangeDataDir = async () => {
     const selected = await open({ directory: true, title: "选择数据存储目录" });
     if (!selected) return;
-
     setMoving(true);
     try {
       await api.setDataDir(selected);
@@ -78,14 +87,84 @@ function SystemSettingsContent() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* 数据目录 */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <FolderOpen className="w-3.5 h-3.5" />
-          数据目录
-        </div>
+    <div className="flex flex-col gap-5">
+      {/* —— 外观 —— */}
+      <SettingSection title="外观">
+        <SettingRow label="主题">
+          <select
+            value={themeMode}
+            onChange={(e) => setThemeMode(e.target.value as "light" | "dark" | "system")}
+            className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground outline-none"
+          >
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
+            <option value="system">跟随系统</option>
+          </select>
+        </SettingRow>
+        <SettingRow label="字体大小">
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={12}
+              max={24}
+              value={fontSize}
+              onChange={(e) => setFontSize(Number(e.target.value))}
+              className="w-24 accent-primary"
+            />
+            <span className="text-xs text-muted-foreground w-8">{fontSize}px</span>
+          </div>
+        </SettingRow>
+        <SettingRow label="字体">
+          <select
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value)}
+            className="bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground outline-none"
+          >
+            <option value="system-ui">系统默认</option>
+            <option value="'Noto Serif SC', serif">思源宋体</option>
+            <option value="'LXGW WenKai', serif">霍要文楷</option>
+            <option value="monospace">等宽字体</option>
+          </select>
+        </SettingRow>
+      </SettingSection>
+
+      {/* —— 写作 —— */}
+      <SettingSection title="写作">
+        <SettingRow label="日更目标">
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              step={500}
+              value={dailyGoal}
+              onChange={(e) => setDailyGoal(Number(e.target.value))}
+              className="w-20 bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground outline-none"
+            />
+            <span className="text-xs text-muted-foreground">字</span>
+          </div>
+        </SettingRow>
+        <SettingRow label="自动保存">
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min={0}
+              step={10}
+              value={autoSaveInterval}
+              onChange={(e) => setAutoSaveInterval(Number(e.target.value))}
+              className="w-16 bg-card border border-border rounded-md px-2 py-1 text-xs text-foreground outline-none"
+            />
+            <span className="text-xs text-muted-foreground">秒</span>
+          </div>
+        </SettingRow>
+      </SettingSection>
+
+      {/* —— 数据保护 —— */}
+      <SettingSection title="数据保护">
         <div className="flex flex-col gap-2 bg-card rounded-lg border border-border p-3">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <FolderOpen className="w-3.5 h-3.5" />
+            数据目录
+          </div>
           <span className="text-xs text-foreground break-all" title={dataDir}>
             {dataDir || "加载中..."}
           </span>
@@ -107,11 +186,45 @@ function SystemSettingsContent() {
               "更改目录"
             )}
           </button>
-          <p className="text-[11px] text-muted-foreground/70">
-            更改后，已有数据会自动迁移到新目录
-          </p>
         </div>
-      </div>
+      </SettingSection>
+
+      {/* —— 帮助 —— */}
+      <SettingSection title="帮助">
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("xinzuo:show-tutorial"));
+          }}
+          className="w-full px-3 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors text-center"
+        >
+          重新查看新手教程
+        </button>
+      </SettingSection>
+
+      {/* —— 账户 —— */}
+      <SettingSection title="账户">
+        <div className="flex flex-col items-center gap-2 py-4 text-muted-foreground text-xs">
+          未登录（离线模式）
+        </div>
+      </SettingSection>
+    </div>
+  );
+}
+
+function SettingSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</span>
+      {children}
+    </div>
+  );
+}
+
+function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-sm text-foreground">{label}</span>
+      {children}
     </div>
   );
 }

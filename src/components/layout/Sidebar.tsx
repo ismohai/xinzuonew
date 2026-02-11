@@ -4,7 +4,7 @@ import { useSettingStore, type ThemeMode } from "@/stores/useSettingStore";
 import type { ExtraPanelType } from "@/types";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NAV_ITEMS } from "@/constants/navigation";
-import { ChapterExplorer } from "@/pages/EditorPage/ChapterExplorer";
+import { LeftPanel } from "@/pages/EditorPage/LeftPanel";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,7 +78,7 @@ export function Sidebar() {
             exit={{ opacity: 0 }}
             transition={{ duration }}
           >
-            <ChapterExplorer embedded />
+            <LeftPanel />
           </motion.div>
         ) : (
           <motion.div

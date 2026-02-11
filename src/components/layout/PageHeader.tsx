@@ -6,6 +6,7 @@ const SIMPLE_TITLES: Partial<Record<PageType, string>> = {
   stats: "写作统计",
   tasks: "任务中心",
   themes: "主题设置",
+  trash: "回收站",
 };
 
 export function PageHeader({ page }: { page: PageType }) {

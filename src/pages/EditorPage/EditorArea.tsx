@@ -1,47 +1,111 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Save } from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import { useEditorStore } from "@/stores/useEditorStore";
 import { useSettingStore } from "@/stores/useSettingStore";
+import { useStatsStore } from "@/stores/useStatsStore";
 
 /**
- * 编辑器主区域 — MVP 阶段使用 textarea
- * 后续版本替换为 Tiptap 富文本编辑器
+ * 编辑器主区域 — 基于 Tiptap 的沉浸式写作编辑器
  */
 export function EditorArea() {
-  const { currentChapter, currentChapterId, dirty, setDirty, saveChapter } = useEditorStore();
+  const { currentChapter, currentChapterId, dirty, setDirty, saveChapter, setLiveWordCount } = useEditorStore();
   const { fontSize, fontFamily } = useSettingStore();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const autoSaveInterval = useSettingStore((s) => s.autoSaveInterval ?? 30);
+  const recordWords = useStatsStore((s) => s.recordWords);
+  const contentRef = useRef<string>("");
+  const dirtyRef = useRef(false);
+  const lastSavedLenRef = useRef(0);
+
+  // 同步 dirty 到 ref（供定时器内使用）
+  useEffect(() => {
+    dirtyRef.current = dirty;
+  }, [dirty]);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: false,
+        codeBlock: false,
+        blockquote: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        horizontalRule: false,
+      }),
+    ],
+    content: "",
+    editorProps: {
+      attributes: {
+        class: "outline-none min-h-full leading-relaxed",
+        spellcheck: "false",
+      },
+    },
+    onUpdate: ({ editor: ed }) => {
+      const text = ed.getText();
+      contentRef.current = text;
+      setLiveWordCount(text.length);
+      if (!dirtyRef.current) {
+        setDirty(true);
+      }
+    },
+  });
+
+  // 同步章节内容到编辑器
+  useEffect(() => {
+    if (editor && currentChapter) {
+      const newContent = currentChapter.content || "";
+      // 避免光标重置：仅内容不同时才设置
+      if (editor.getText() !== newContent) {
+        editor.commands.setContent(
+          newContent
+            ? `<p>${newContent.split("\n").join("</p><p>")}</p>`
+            : "<p></p>"
+        );
+        contentRef.current = newContent;
+        lastSavedLenRef.current = newContent.length;
+        setLiveWordCount(newContent.length);
+      }
+    }
+  }, [editor, currentChapter, setLiveWordCount]);
+
+  const handleSave = useCallback(() => {
+    const content = contentRef.current;
+    const delta = content.length - lastSavedLenRef.current;
+    saveChapter(content);
+    lastSavedLenRef.current = content.length;
+    // 记录写作统计
+    if (delta > 0) {
+      const today = new Date().toISOString().slice(0, 10);
+      recordWords(today, delta, 0);
+    }
+  }, [saveChapter, recordWords]);
 
   // Ctrl+S 保存
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        if (textareaRef.current && dirty) {
-          saveChapter(textareaRef.current.value);
+        if (dirtyRef.current) {
+          handleSave();
         }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [dirty, saveChapter]);
+  }, [handleSave]);
 
-  // 同步内容到 textarea
+  // 自动保存定时器
   useEffect(() => {
-    if (textareaRef.current && currentChapter) {
-      textareaRef.current.value = currentChapter.content || "";
-    }
-  }, [currentChapter]);
-
-  const handleChange = useCallback(() => {
-    if (!dirty) setDirty(true);
-  }, [dirty, setDirty]);
-
-  const handleSave = useCallback(() => {
-    if (textareaRef.current) {
-      saveChapter(textareaRef.current.value);
-    }
-  }, [saveChapter]);
+    if (!currentChapterId || autoSaveInterval <= 0) return;
+    const timer = setInterval(() => {
+      if (dirtyRef.current) {
+        handleSave();
+      }
+    }, autoSaveInterval * 1000);
+    return () => clearInterval(timer);
+  }, [currentChapterId, autoSaveInterval, handleSave]);
 
   if (!currentChapterId) {
     return (
@@ -76,18 +140,19 @@ export function EditorArea() {
         </div>
       </div>
 
-      {/* 编辑区 */}
-      <textarea
-        ref={textareaRef}
-        onChange={handleChange}
-        placeholder="开始书写..."
-        className="flex-1 w-full p-6 bg-background text-foreground resize-none outline-none placeholder:text-muted-foreground/50 leading-relaxed"
+      {/* Tiptap 编辑区 */}
+      <div
+        className="flex-1 overflow-y-auto"
         style={{
           fontSize: `${fontSize}px`,
           fontFamily,
         }}
-        spellCheck={false}
-      />
+      >
+        <EditorContent
+          editor={editor}
+          className="xinzuo-editor h-full px-6 py-4 text-foreground [&_.tiptap]:outline-none [&_.tiptap]:min-h-full [&_.tiptap_p]:mb-2 [&_.tiptap_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.tiptap_p.is-editor-empty:first-child::before]:text-muted-foreground/50 [&_.tiptap_p.is-editor-empty:first-child::before]:float-left [&_.tiptap_p.is-editor-empty:first-child::before]:h-0 [&_.tiptap_p.is-editor-empty:first-child::before]:pointer-events-none"
+        />
+      </div>
     </div>
   );
 }

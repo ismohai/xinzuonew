@@ -234,6 +234,56 @@ pub async fn delete_chapter(storage_path: String, id: String) -> Result<(), Stri
     Ok(())
 }
 
+/// 搜索章节内容
+#[derive(serde::Serialize)]
+pub struct SearchHit {
+    pub chapter_id: String,
+    pub chapter_name: String,
+    pub volume_id: String,
+    pub snippet: String,
+}
+
+#[tauri::command]
+pub async fn search_chapters(
+    storage_path: String,
+    query: String,
+    volume_id: Option<String>,
+) -> Result<Vec<SearchHit>, String> {
+    let conn = open_book(&storage_path)?;
+    let q = format!("%{}%", query);
+    let sql = if volume_id.is_some() {
+        "SELECT id, name, volume_id, content FROM chapters WHERE volume_id = ?2 AND content LIKE ?1 ORDER BY sort_order ASC LIMIT 50"
+    } else {
+        "SELECT id, name, volume_id, content FROM chapters WHERE content LIKE ?1 ORDER BY sort_order ASC LIMIT 50"
+    };
+    let mut stmt = conn.prepare(sql).map_err(|e| format!("搜索失败: {}", e))?;
+    let params_dyn: Vec<Box<dyn rusqlite::types::ToSql>> = if let Some(ref vid) = volume_id {
+        vec![Box::new(q.clone()), Box::new(vid.clone())]
+    } else {
+        vec![Box::new(q.clone())]
+    };
+    let results = stmt
+        .query_map(rusqlite::params_from_iter(params_dyn.iter().map(|p| p.as_ref())), |row| {
+            let content: String = row.get(3)?;
+            let lower_content = content.to_lowercase();
+            let lower_query = query.to_lowercase();
+            let pos = lower_content.find(&lower_query).unwrap_or(0);
+            let start = if pos > 20 { pos - 20 } else { 0 };
+            let end = std::cmp::min(content.len(), pos + query.len() + 40);
+            let snippet: String = content.chars().skip(start).take(end - start).collect();
+            Ok(SearchHit {
+                chapter_id: row.get(0)?,
+                chapter_name: row.get(1)?,
+                volume_id: row.get(2)?,
+                snippet,
+            })
+        })
+        .map_err(|e| format!("搜索失败: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("解析搜索结果失败: {}", e))?;
+    Ok(results)
+}
+
 /// 标记章节完成状态
 #[tauri::command]
 pub async fn set_chapter_status(

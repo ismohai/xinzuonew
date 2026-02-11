@@ -3,7 +3,7 @@
 // ============================================================================
 
 /** 主界面 Sidebar 导航页 */
-export type PageType = 'content' | 'inspiration' | 'stats' | 'tasks' | 'themes';
+export type PageType = 'content' | 'inspiration' | 'stats' | 'tasks' | 'themes' | 'trash';
 
 /** 右侧滑出面板 */
 export type ExtraPanelType = 'updates' | 'about' | 'notifications' | 'settings' | null;
@@ -107,4 +107,12 @@ export interface TrashItem {
 export interface Setting {
   key: string;
   value: string;
+}
+
+/** 编辑器标签页 */
+export interface EditorTab {
+  chapterId: string;
+  chapterName: string;
+  volumeId: string;
+  dirty: boolean;
 }

@@ -43,12 +43,12 @@ pub async fn create_book(name: String, author_name: String) -> Result<Book, Stri
     })
 }
 
-/// 获取所有书籍列表
+/// 获取所有书籍列表（排除已删除的）
 #[tauri::command]
 pub async fn list_books() -> Result<Vec<Book>, String> {
     let conn = db::init_global_db()?;
     let mut stmt = conn
-        .prepare("SELECT id, name, author_name, cover_path, storage_path, created_at, updated_at FROM books ORDER BY created_at DESC")
+        .prepare("SELECT id, name, author_name, cover_path, storage_path, created_at, updated_at FROM books WHERE deleted_at IS NULL ORDER BY created_at DESC")
         .map_err(|e| format!("查询书籍失败: {}", e))?;
 
     let books = stmt
@@ -106,18 +106,109 @@ pub async fn update_book(
     Ok(())
 }
 
-/// 删除书籍（从 global.db 移除记录，但保留磁盘文件让用户手动清理）
+/// 软删除书籍（设置 deleted_at 时间戳，进入回收站）
 #[tauri::command]
 pub async fn delete_book(id: String) -> Result<(), String> {
     let conn = db::init_global_db()?;
+    let now = chrono::Utc::now().to_rfc3339();
+    conn.execute(
+        "UPDATE books SET deleted_at = ?1 WHERE id = ?2",
+        params![now, id],
+    )
+    .map_err(|e| format!("删除书籍失败: {}", e))?;
+    Ok(())
+}
+
+/// 获取回收站中的书籍列表
+#[tauri::command]
+pub async fn list_deleted_books() -> Result<Vec<DeletedBook>, String> {
+    let conn = db::init_global_db()?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, author_name, cover_path, storage_path, created_at, updated_at, deleted_at
+             FROM books WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC",
+        )
+        .map_err(|e| format!("查询回收站失败: {}", e))?;
+
+    let books = stmt
+        .query_map([], |row| {
+            Ok(DeletedBook {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                author_name: row.get(2)?,
+                cover_path: row.get(3)?,
+                storage_path: row.get(4)?,
+                created_at: row.get(5)?,
+                updated_at: row.get(6)?,
+                deleted_at: row.get(7)?,
+            })
+        })
+        .map_err(|e| format!("读取回收站失败: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("解析回收站失败: {}", e))?;
+
+    Ok(books)
+}
+
+/// 从回收站恢复书籍
+#[tauri::command]
+pub async fn restore_book(id: String) -> Result<(), String> {
+    let conn = db::init_global_db()?;
+    conn.execute(
+        "UPDATE books SET deleted_at = NULL WHERE id = ?1",
+        params![id],
+    )
+    .map_err(|e| format!("恢复书籍失败: {}", e))?;
+    Ok(())
+}
+
+/// 永久删除书籍（从数据库移除记录 + 删除磁盘文件）
+#[tauri::command]
+pub async fn permanently_delete_book(id: String) -> Result<(), String> {
+    let cfg = config::load_config()?;
+    let conn = db::init_global_db()?;
+
+    // 先查询 storage_path 以便删除磁盘文件
+    let storage_path: Option<String> = conn
+        .query_row(
+            "SELECT storage_path FROM books WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .ok();
+
+    // 从数据库删除记录
     conn.execute("DELETE FROM books WHERE id = ?1", params![id])
-        .map_err(|e| format!("删除书籍失败: {}", e))?;
+        .map_err(|e| format!("永久删除书籍记录失败: {}", e))?;
+
+    // 删除磁盘上的书籍目录
+    if let Some(sp) = storage_path {
+        let book_dir = config::books_dir(&cfg).join(&sp);
+        if book_dir.exists() {
+            fs::remove_dir_all(&book_dir)
+                .map_err(|e| format!("删除书籍目录失败: {}", e))?;
+        }
+    }
+
     Ok(())
 }
 
 // ============================================================================
-// 辅助函数
+// 辅助函数及模型
 // ============================================================================
+
+/// 回收站中的书籍（带 deleted_at 字段）
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct DeletedBook {
+    pub id: String,
+    pub name: String,
+    pub author_name: String,
+    pub cover_path: Option<String>,
+    pub storage_path: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub deleted_at: String,
+}
 
 /// 去除文件名中不安全的字符
 fn sanitize_dir_name(name: &str) -> String {
